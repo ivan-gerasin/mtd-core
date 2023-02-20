@@ -1,3 +1,3 @@
-module github.com/ivan-gerasin/mtd-core
+module github.com/ivan-gerasin/mtdcore
 
 go 1.19
