@@ -1,4 +1,4 @@
-package lib
+package mtdCore
 
 import (
 	"encoding/json"
