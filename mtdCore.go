@@ -82,7 +82,7 @@ func saveToDoList(file *os.File, todoList *ToDoGlobal) {
 
 func AddItem(item string, priority Priority) {
 	file, ptrResults, _ := readTodoList(MODE_EDIT)
-	highestNumber := 1
+	highestNumber := 0
 	for key := range *ptrResults {
 		if (*ptrResults)[key].Id > highestNumber {
 			highestNumber = (*ptrResults)[key].Id
@@ -104,14 +104,15 @@ func Done(id int) {
 	if id <= 0 {
 		fmt.Println("Error: number can not be equal to zero or lower") // TODO throw error
 	}
-	if len(*ptrResults) >= id {
-		for i := range *ptrResults {
-			if (*ptrResults)[i].Id == id {
-				(*ptrResults)[i].Done = true
-				break
-			}
+	found := false
+	for i := range *ptrResults {
+		if (*ptrResults)[i].Id == id {
+			(*ptrResults)[i].Done = true
+			found = true
+			break
 		}
-
+	}
+	if found {
 		saveToDoList(file, ptrResults)
 	} else {
 		fmt.Println("Error: no such element") // TODO throw error
