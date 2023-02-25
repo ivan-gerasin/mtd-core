@@ -1,7 +1,6 @@
 package mtdCore
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -32,56 +31,19 @@ const PRIORITY_LOW int8 = 3
 const MODE_EDIT = os.O_CREATE | os.O_RDWR
 const MODE_READ = os.O_CREATE | os.O_RDONLY
 
-func readTodoList(mode int) (*os.File, *ToDoGlobal, func()) {
-	file, err := os.OpenFile("todolist.json", mode, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fileStat, err := file.Stat()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	size := fileStat.Size()
-	buffer := make([]byte, size)
-	readSize, err := file.Read(buffer)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if int64(readSize) != size {
-		log.Fatal("Read size and actual size are different")
-	}
-	if readSize == 0 {
-		buffer = []byte(`[]`)
-	}
-
-	results := make(ToDoGlobal, 10) // TODO: figure out what is best way identify size
-	err = json.Unmarshal(buffer, &results)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	closeFile := func() {
-		file.Close()
-	}
-
-	return file, &results, closeFile
+type TodoListStorage interface {
+	ReadTodoList() (error, *ToDoGlobal)
+	SaveToDoList(lst *ToDoGlobal) error
 }
 
-func saveToDoList(file *os.File, todoList *ToDoGlobal) {
-	bytesToWrite, err := json.Marshal(*todoList)
-	errCheck(err)
-
-	_, err = file.Seek(0, 0)
-	errCheck(err)
-	_, err = file.Write(bytesToWrite)
-	errCheck(err)
-	file.Close()
-}
+var Storage TodoListStorage = FileStorage{}
 
 func AddItem(item string, priority Priority) {
-	file, ptrResults, _ := readTodoList(MODE_EDIT)
+	err, ptrResults := Storage.ReadTodoList()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	highestNumber := 0
 	for key := range *ptrResults {
 		if (*ptrResults)[key].Id > highestNumber {
@@ -89,13 +51,17 @@ func AddItem(item string, priority Priority) {
 		}
 	}
 	*ptrResults = append(*ptrResults, ToDoItem{highestNumber + 1, item, false, priority})
-	saveToDoList(file, ptrResults)
+	err = Storage.SaveToDoList(ptrResults)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func List() *ToDoGlobal {
-	_, ptrResults, closeFile := readTodoList(MODE_READ)
-	defer closeFile()
-
+	err, ptrResults := Storage.ReadTodoList()
+	if err != nil {
+		log.Fatal()
+	}
 	return ptrResults
 }
 
