@@ -44,7 +44,10 @@ func TestList(t *testing.T) {
 	setup()
 
 	t.Run("Should return list of items", func(t *testing.T) {
-		result := List() // Expected list of 1 element
+		err, result := List() // Expected list of 1 element
+		if err != nil {
+			t.Error("Error is not expected in this case")
+		}
 		if len(*result) != 1 {
 			t.Error("Incorrect list size")
 		}
@@ -69,7 +72,10 @@ func TestAddItem(t *testing.T) {
 	setup()
 
 	t.Run("Should call SaveToDoList with new item", func(t *testing.T) {
-		AddItem("New text", 1)
+		err := AddItem("New text", 1)
+		if err != nil {
+			t.Error("Error is not expected in this case")
+		}
 		if saveToDoListCalls == nil {
 			t.Error("Should not be nil")
 		}
@@ -96,7 +102,10 @@ func TestAddItem(t *testing.T) {
 func TestDone(t *testing.T) {
 	setup()
 	t.Run("Should mark given test item as done", func(t *testing.T) {
-		Done(testItemId)
+		err := Done(testItemId)
+		if err != nil {
+			t.Error("Error is not expected in this case")
+		}
 		if (*saveToDoListCalls)[0].Done != true {
 			t.Error("Should set Done flag")
 		}

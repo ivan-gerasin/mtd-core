@@ -38,10 +38,20 @@ type TodoListStorage interface {
 
 var Storage TodoListStorage = &FileStorage{}
 
-func AddItem(item string, priority Priority) {
+type MtdError struct {
+	Where         string
+	Why           string
+	OriginalError *error
+}
+
+func (e *MtdError) Error() string {
+	return fmt.Sprintf("Error: %v, because of %s", e.Where, e.Why)
+}
+
+func AddItem(item string, priority Priority) error {
 	err, ptrResults := Storage.ReadTodoList()
 	if err != nil {
-		log.Fatal(err)
+		return &MtdError{Why: err.Error(), Where: "AddItem(): While trying to read todo list", OriginalError: &err}
 	}
 
 	highestNumber := 0
@@ -53,22 +63,23 @@ func AddItem(item string, priority Priority) {
 	*ptrResults = append(*ptrResults, ToDoItem{highestNumber + 1, item, false, priority})
 	err = Storage.SaveToDoList(ptrResults)
 	if err != nil {
-		log.Fatal(err)
+		return &MtdError{Why: err.Error(), Where: "AddItem(): While trying to save todo list", OriginalError: &err}
 	}
+	return nil
 }
 
-func List() *ToDoGlobal {
+func List() (error, *ToDoGlobal) {
 	err, ptrResults := Storage.ReadTodoList()
 	if err != nil {
-		log.Fatal()
+		return &MtdError{Where: "List(): while reading todo list", Why: err.Error(), OriginalError: &err}, nil
 	}
-	return ptrResults
+	return nil, ptrResults
 }
 
-func Done(id int) {
+func Done(id int) error {
 	err, ptrResults := Storage.ReadTodoList()
 	if id <= 0 {
-		fmt.Println("Error: number can not be equal to zero or lower") // TODO throw error
+		return &MtdError{Why: "number can not be equal to zero or lower", Where: "Done(): checking if id is valid", OriginalError: nil}
 	}
 	found := false
 	for i := range *ptrResults {
@@ -81,9 +92,10 @@ func Done(id int) {
 	if found {
 		err = Storage.SaveToDoList(ptrResults)
 		if err != nil {
-			log.Fatal("Failed to save todo list")
+			return &MtdError{Why: err.Error(), Where: "Done(): While trying to save todo list after setting Done flag", OriginalError: &err}
 		}
 	} else {
-		fmt.Println("Error: no such element") // TODO throw error
+		return &MtdError{Why: "no element with id#" + fmt.Sprint(id), Where: "Done(): while looking for given Id", OriginalError: nil}
 	}
+	return nil
 }
