@@ -2,7 +2,6 @@ package mtdCore
 
 import (
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -16,12 +15,6 @@ type ToDoItem struct {
 }
 
 type ToDoGlobal = []ToDoItem
-
-func errCheck(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 const PRIORITY_NOT_SET int8 = 0
 const PRIORITY_HIGHT int8 = 1

@@ -7,19 +7,19 @@ type MockedFileSystem struct {
 type FileMock struct {
 	close error
 	seek  struct {
-		ret int64;
+		ret int64
 		err error
 	}
 	stat struct {
-		finfo os.FileInfo;
+		finfo os.FileInfo
 		error
 	}
 	read struct {
-		n   int;
+		n   int
 		err error
 	}
 	write struct {
-		n   int;
+		n   int
 		err error
 	}
 }

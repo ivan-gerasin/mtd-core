@@ -2,7 +2,7 @@ package mtdCore
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 )
 
@@ -26,26 +26,46 @@ func (fs StandardFileSystem) OpenFile(name string, flag int, perm int) (File, er
 
 var fs = StandardFileSystem{}
 
-func readTodoList(mode int) (File, *ToDoGlobal, func()) {
-	//file, err := os.OpenFile("todolist.json", mode, 0644)
+type FileStorageError struct {
+	Details       string
+	OriginalError error
+}
+
+func (err *FileStorageError) Error() string {
+	return fmt.Sprintf("FileStorageError: %s", err.Details)
+}
+
+func readTodoList(mode int) (error, File, *ToDoGlobal, func() error) {
 	file, err := fs.OpenFile("todolist.json", mode, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return &FileStorageError{"readTodoList(): Error while trying to open file", err},
+			nil,
+			nil,
+			nil
 	}
 
 	fileStat, err := file.Stat()
 	if err != nil {
-		log.Fatal(err)
+		return &FileStorageError{"readTodoList(): Error while trying to get file Stat information", err},
+			nil,
+			nil,
+			nil
 	}
 
 	size := fileStat.Size()
 	buffer := make([]byte, size)
 	readSize, err := file.Read(buffer)
 	if err != nil {
-		log.Fatal(err)
+		return &FileStorageError{"readTodoList(): Error while trying to read file", err},
+			nil,
+			nil,
+			nil
 	}
 	if int64(readSize) != size {
-		log.Fatal("Read size and actual size are different")
+		return &FileStorageError{"readTodoList(): Error there is a difference b/w file size by file.Stat() and read size", err},
+			nil,
+			nil,
+			nil
 	}
 	if readSize == 0 {
 		buffer = []byte(`[]`)
@@ -54,25 +74,44 @@ func readTodoList(mode int) (File, *ToDoGlobal, func()) {
 	results := make(ToDoGlobal, 10) // TODO: figure out what is best way identify size
 	err = json.Unmarshal(buffer, &results)
 	if err != nil {
-		log.Fatal(err)
+		return &FileStorageError{"readTodoList(): fail to Unmarshal json file", err},
+			nil,
+			nil,
+			nil
 	}
 
-	closeFile := func() {
-		file.Close()
+	closeFile := func() error {
+		err = file.Close()
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
-	return file, &results, closeFile
+	return nil, file, &results, closeFile
 }
 
-func saveToDoList(file File, todoList *ToDoGlobal) {
+func saveToDoList(file File, todoList *ToDoGlobal) error {
 	bytesToWrite, err := json.Marshal(*todoList)
-	errCheck(err)
+	if err != nil {
+		return &FileStorageError{Details: "saveToDoList(): Error while json marshalling", OriginalError: err}
+	}
 
 	_, err = file.Seek(0, 0)
-	errCheck(err)
+	if err != nil {
+		return &FileStorageError{Details: "saveToDoList(): Error while moving position in file", OriginalError: err}
+	}
+
 	_, err = file.Write(bytesToWrite)
-	errCheck(err)
-	file.Close()
+	if err != nil {
+		return &FileStorageError{Details: "saveToDoList(): Error while writing to file", OriginalError: err}
+	}
+
+	err = file.Close()
+	if err != nil {
+		return &FileStorageError{Details: "saveToDoList(): Error while closing the file", OriginalError: err}
+	}
+	return nil
 }
 
 type FileStorage struct{}
@@ -84,14 +123,29 @@ type FileStorage struct{}
 */
 
 func (fs FileStorage) ReadTodoList() (error, *ToDoGlobal) {
-	_, list, closeFile := readTodoList(MODE_READ)
-	closeFile()
+	err, _, list, closeFile := readTodoList(MODE_READ)
+	if err != nil {
+		return &MtdError{Where: "ReadTodoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}, nil
+	}
+	err = closeFile()
+	if err != nil {
+		return &MtdError{Where: "ReadTodoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}, nil
+	}
 	return nil, list
 }
 
 func (fs FileStorage) SaveToDoList(lst *ToDoGlobal) error {
-	file, _, closeFile := readTodoList(MODE_EDIT)
-	saveToDoList(file, lst)
-	closeFile()
+	err, file, _, closeFile := readTodoList(MODE_EDIT)
+	if err != nil {
+		return &MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
+	}
+	err = saveToDoList(file, lst)
+	if err != nil {
+		return &MtdError{Where: "SaveToDoList(): failed to save todo list file with FileStorage", Why: err.Error(), OriginalError: &err}
+	}
+	err = closeFile()
+	if err != nil {
+		return &MtdError{Where: "SaveToDoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}
+	}
 	return nil
 }
