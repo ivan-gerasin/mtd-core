@@ -6,8 +6,29 @@ import (
 	"os"
 )
 
-func readTodoList(mode int) (*os.File, *ToDoGlobal, func()) {
-	file, err := os.OpenFile("todolist.json", mode, 0644)
+type File interface {
+	Close() error
+	Seek(offset int64, whence int) (ret int64, err error)
+	Stat() (os.FileInfo, error)
+	Read(b []byte) (n int, err error)
+	Write(b []byte) (n int, err error)
+}
+
+type FileSystem interface {
+	OpenFile(name string, flag int, perm int) (File, error)
+}
+
+type StandardFileSystem struct{}
+
+func (fs StandardFileSystem) OpenFile(name string, flag int, perm int) (File, error) {
+	return os.OpenFile(name, flag, os.FileMode(perm))
+}
+
+var fs = StandardFileSystem{}
+
+func readTodoList(mode int) (File, *ToDoGlobal, func()) {
+	//file, err := os.OpenFile("todolist.json", mode, 0644)
+	file, err := fs.OpenFile("todolist.json", mode, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +64,7 @@ func readTodoList(mode int) (*os.File, *ToDoGlobal, func()) {
 	return file, &results, closeFile
 }
 
-func saveToDoList(file *os.File, todoList *ToDoGlobal) {
+func saveToDoList(file File, todoList *ToDoGlobal) {
 	bytesToWrite, err := json.Marshal(*todoList)
 	errCheck(err)
 

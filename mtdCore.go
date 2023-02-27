@@ -36,7 +36,7 @@ type TodoListStorage interface {
 	SaveToDoList(lst *ToDoGlobal) error
 }
 
-var Storage TodoListStorage = FileStorage{}
+var Storage TodoListStorage = &FileStorage{}
 
 func AddItem(item string, priority Priority) {
 	err, ptrResults := Storage.ReadTodoList()
@@ -66,7 +66,7 @@ func List() *ToDoGlobal {
 }
 
 func Done(id int) {
-	file, ptrResults, _ := readTodoList(MODE_EDIT)
+	err, ptrResults := Storage.ReadTodoList()
 	if id <= 0 {
 		fmt.Println("Error: number can not be equal to zero or lower") // TODO throw error
 	}
@@ -79,7 +79,10 @@ func Done(id int) {
 		}
 	}
 	if found {
-		saveToDoList(file, ptrResults)
+		err = Storage.SaveToDoList(ptrResults)
+		if err != nil {
+			log.Fatal("Failed to save todo list")
+		}
 	} else {
 		fmt.Println("Error: no such element") // TODO throw error
 	}
