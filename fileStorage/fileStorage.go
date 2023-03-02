@@ -1,8 +1,9 @@
-package mtdCore
+package fileStorage
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ivan-gerasin/mtdcore/mtdmodels"
 	"os"
 )
 
@@ -24,7 +25,7 @@ func (fs StandardFileSystem) OpenFile(name string, flag int, perm int) (File, er
 	return os.OpenFile(name, flag, os.FileMode(perm))
 }
 
-var fs = StandardFileSystem{}
+var standardFileSystem = StandardFileSystem{}
 
 type FileStorageError struct {
 	Details       string
@@ -35,8 +36,8 @@ func (err *FileStorageError) Error() string {
 	return fmt.Sprintf("FileStorageError: %s", err.Details)
 }
 
-func readTodoList(mode int) (error, File, *ToDoGlobal, func() error) {
-	file, err := fs.OpenFile("todolist.json", mode, 0644)
+func readTodoList(mode int) (error, File, *mtdmodels.ToDoGlobal, func() error) {
+	file, err := standardFileSystem.OpenFile("todolist.json", mode, 0644)
 	if err != nil {
 		return &FileStorageError{"readTodoList(): Error while trying to open file", err},
 			nil,
@@ -71,7 +72,7 @@ func readTodoList(mode int) (error, File, *ToDoGlobal, func() error) {
 		buffer = []byte(`[]`)
 	}
 
-	results := make(ToDoGlobal, 10) // TODO: figure out what is best way identify size
+	results := make(mtdmodels.ToDoGlobal, 10) // TODO: figure out what is best way identify size
 	err = json.Unmarshal(buffer, &results)
 	if err != nil {
 		return &FileStorageError{"readTodoList(): fail to Unmarshal json file", err},
@@ -91,7 +92,7 @@ func readTodoList(mode int) (error, File, *ToDoGlobal, func() error) {
 	return nil, file, &results, closeFile
 }
 
-func saveToDoList(file File, todoList *ToDoGlobal) error {
+func saveToDoList(file File, todoList *mtdmodels.ToDoGlobal) error {
 	bytesToWrite, err := json.Marshal(*todoList)
 	if err != nil {
 		return &FileStorageError{Details: "saveToDoList(): Error while json marshalling", OriginalError: err}
@@ -116,36 +117,30 @@ func saveToDoList(file File, todoList *ToDoGlobal) error {
 
 type FileStorage struct{}
 
-/*
-
-	ONE GIANT TODO: RETURN ERRORS!
-
-*/
-
-func (fs FileStorage) ReadTodoList() (error, *ToDoGlobal) {
-	err, _, list, closeFile := readTodoList(MODE_READ)
+func (fs FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
+	err, _, list, closeFile := readTodoList(mtdmodels.MODE_READ)
 	if err != nil {
-		return &MtdError{Where: "ReadTodoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}, nil
+		return &mtdmodels.MtdError{Where: "ReadTodoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}, nil
 	}
 	err = closeFile()
 	if err != nil {
-		return &MtdError{Where: "ReadTodoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}, nil
+		return &mtdmodels.MtdError{Where: "ReadTodoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}, nil
 	}
 	return nil, list
 }
 
-func (fs FileStorage) SaveToDoList(lst *ToDoGlobal) error {
-	err, file, _, closeFile := readTodoList(MODE_EDIT)
+func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
+	err, file, _, closeFile := readTodoList(mtdmodels.MODE_EDIT)
 	if err != nil {
-		return &MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
+		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	err = saveToDoList(file, lst)
 	if err != nil {
-		return &MtdError{Where: "SaveToDoList(): failed to save todo list file with FileStorage", Why: err.Error(), OriginalError: &err}
+		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to save todo list file with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	err = closeFile()
 	if err != nil {
-		return &MtdError{Where: "SaveToDoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}
+		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	return nil
 }

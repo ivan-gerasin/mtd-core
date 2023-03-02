@@ -1,6 +1,8 @@
-package mtdCore
+package fileStorage
 
-import "os"
+import (
+	"os"
+)
 
 type MockedFileSystem struct {
 }
@@ -48,4 +50,11 @@ var fileMockPrototype = FileMock{}
 
 func (fs MockedFileSystem) OpenFile(name string, flag int, perm int) (File, error) {
 	return fileMockPrototype, nil
+}
+
+var mockedFs = MockedFileSystem{}
+var originalFs FileSystem = nil
+
+func setup() {
+
 }

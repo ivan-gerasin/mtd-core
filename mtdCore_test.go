@@ -1,6 +1,7 @@
 package mtdCore
 
 import (
+	"github.com/ivan-gerasin/mtdcore/mtdmodels"
 	"testing"
 )
 
@@ -9,9 +10,9 @@ type MockedStorage struct {
 
 const testItemId = 99
 
-func (fs MockedStorage) ReadTodoList() (error, *ToDoGlobal) {
-	return nil, &ToDoGlobal{
-		ToDoItem{
+func (fs MockedStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
+	return nil, &mtdmodels.ToDoGlobal{
+		mtdmodels.ToDoItem{
 			Id:       testItemId,
 			Summary:  "Test item",
 			Done:     false,
@@ -20,15 +21,15 @@ func (fs MockedStorage) ReadTodoList() (error, *ToDoGlobal) {
 	}
 }
 
-func (fs MockedStorage) SaveToDoList(lst *ToDoGlobal) error {
+func (fs MockedStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	saveToDoListCalls = lst
 	return nil
 }
 
 var storageMock = &MockedStorage{}
-var original TodoListStorage
+var original mtdmodels.TodoListStorage
 
-var saveToDoListCalls *ToDoGlobal
+var saveToDoListCalls *mtdmodels.ToDoGlobal
 
 func setup() {
 	original = Storage
