@@ -52,9 +52,24 @@ func (fs MockedFileSystem) OpenFile(name string, flag int, perm int) (File, erro
 	return fileMockPrototype, nil
 }
 
-var mockedFs = MockedFileSystem{}
+var mockedFs = &MockedFileSystem{}
 var originalFs FileSystem = nil
 
 func setup() {
-
+	originalFs = standardFileSystem
+	standardFileSystem = mockedFs
 }
+
+func tearDown() {
+	standardFileSystem = originalFs
+}
+
+// TODO: someday write tests for fileStorage :)
+
+//func TestFileStorage_ReadTodoList(t *testing.T) {
+//	t.Run("Access to a file within filesystem with OpenFile", func(t *testing.T) {
+//		setup()
+//
+//		tearDown()
+//	})
+//}

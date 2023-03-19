@@ -25,7 +25,7 @@ func (fs StandardFileSystem) OpenFile(name string, flag int, perm int) (File, er
 	return os.OpenFile(name, flag, os.FileMode(perm))
 }
 
-var standardFileSystem = StandardFileSystem{}
+var standardFileSystem FileSystem = &StandardFileSystem{}
 
 type FileStorageError struct {
 	Details       string
