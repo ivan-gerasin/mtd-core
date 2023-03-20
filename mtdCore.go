@@ -2,14 +2,15 @@ package mtdCore
 
 import (
 	"fmt"
-	"github.com/ivan-gerasin/mtdcore/fileStorage"
 	"github.com/ivan-gerasin/mtdcore/mtdmodels"
 )
 
-var Storage mtdmodels.TodoListStorage = &fileStorage.FileStorage{}
+type LocalFilesManager struct {
+	storage *mtdmodels.TodoListStorage
+}
 
-func AddItem(item string, priority mtdmodels.Priority) error {
-	err, ptrResults := Storage.ReadTodoList()
+func (manager *LocalFilesManager) AddItem(item string, priority mtdmodels.Priority) error {
+	err, ptrResults := (*manager.storage).ReadTodoList()
 	if err != nil {
 		return &mtdmodels.MtdError{Why: err.Error(), Where: "AddItem(): While trying to read todo list", OriginalError: &err}
 	}
@@ -21,23 +22,23 @@ func AddItem(item string, priority mtdmodels.Priority) error {
 		}
 	}
 	*ptrResults = append(*ptrResults, mtdmodels.ToDoItem{highestNumber + 1, item, false, priority})
-	err = Storage.SaveToDoList(ptrResults)
+	err = (*manager.storage).SaveToDoList(ptrResults)
 	if err != nil {
 		return &mtdmodels.MtdError{Why: err.Error(), Where: "AddItem(): While trying to save todo list", OriginalError: &err}
 	}
 	return nil
 }
 
-func List() (error, *mtdmodels.ToDoGlobal) {
-	err, ptrResults := Storage.ReadTodoList()
+func (manager *LocalFilesManager) List() (error, *mtdmodels.ToDoGlobal) {
+	err, ptrResults := (*manager.storage).ReadTodoList()
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "List(): while reading todo list", Why: err.Error(), OriginalError: &err}, nil
 	}
 	return nil, ptrResults
 }
 
-func Done(id int) error {
-	err, ptrResults := Storage.ReadTodoList()
+func (manager *LocalFilesManager) Done(id int) error {
+	err, ptrResults := (*manager.storage).ReadTodoList()
 	if id <= 0 {
 		return &mtdmodels.MtdError{Why: "number can not be equal to zero or lower", Where: "Done(): checking if id is valid", OriginalError: nil}
 	}
@@ -50,7 +51,7 @@ func Done(id int) error {
 		}
 	}
 	if found {
-		err = Storage.SaveToDoList(ptrResults)
+		err = (*manager.storage).SaveToDoList(ptrResults)
 		if err != nil {
 			return &mtdmodels.MtdError{Why: err.Error(), Where: "Done(): While trying to save todo list after setting Done flag", OriginalError: &err}
 		}
@@ -58,4 +59,11 @@ func Done(id int) error {
 		return &mtdmodels.MtdError{Why: "no element with id#" + fmt.Sprint(id), Where: "Done(): while looking for given Id", OriginalError: nil}
 	}
 	return nil
+}
+
+func (manager *LocalFilesManager) UseStorage(storage *mtdmodels.TodoListStorage) {
+	if storage == nil {
+		panic("Storage can not be null")
+	}
+	manager.storage = storage
 }
