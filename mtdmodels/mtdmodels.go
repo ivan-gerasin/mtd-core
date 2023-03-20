@@ -29,6 +29,12 @@ type TodoListStorage interface {
 	SaveToDoList(lst *ToDoGlobal) error
 }
 
+type TodoListManager interface {
+	AddItem(item string, priority Priority) error
+	List() (error, *ToDoGlobal)
+	Done(id int) error
+}
+
 type MtdError struct {
 	Where         string
 	Why           string
