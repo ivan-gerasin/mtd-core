@@ -61,9 +61,9 @@ func (manager *LocalFilesManager) Done(id int) error {
 	return nil
 }
 
-func (manager *LocalFilesManager) UseStorage(storage *mtdmodels.TodoListStorage) {
+func (manager *LocalFilesManager) UseStorage(storage mtdmodels.TodoListStorage) {
 	if storage == nil {
 		panic("Storage can not be null")
 	}
-	manager.storage = storage
+	manager.storage = &storage
 }
