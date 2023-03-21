@@ -26,26 +26,13 @@ func (fs MockedStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	return nil
 }
 
-var storageMock = &MockedStorage{}
-var original mtdmodels.TodoListStorage
-
+var storageMock mtdmodels.TodoListStorage = MockedStorage{}
 var saveToDoListCalls *mtdmodels.ToDoGlobal
-
-func setup() {
-	original = Storage
-	saveToDoListCalls = nil
-	Storage = storageMock
-}
-
-func tearDown() {
-	Storage = original
-}
+var manager = LocalFilesManager{&storageMock}
 
 func TestList(t *testing.T) {
-	setup()
-
 	t.Run("Should return list of items", func(t *testing.T) {
-		err, result := List() // Expected list of 1 element
+		err, result := manager.List() // Expected list of 1 element
 		if err != nil {
 			t.Error("Error is not expected in this case")
 		}
@@ -65,15 +52,11 @@ func TestList(t *testing.T) {
 			t.Error("Expecting different Summary value")
 		}
 	})
-
-	tearDown()
 }
 
 func TestAddItem(t *testing.T) {
-	setup()
-
 	t.Run("Should call SaveToDoList with new item", func(t *testing.T) {
-		err := AddItem("New text", 1)
+		err := manager.AddItem("New text", 1)
 		if err != nil {
 			t.Error("Error is not expected in this case")
 		}
@@ -96,14 +79,11 @@ func TestAddItem(t *testing.T) {
 			t.Error("Should not set Done flag")
 		}
 	})
-
-	tearDown()
 }
 
 func TestDone(t *testing.T) {
-	setup()
 	t.Run("Should mark given test item as done", func(t *testing.T) {
-		err := Done(testItemId)
+		err := manager.Done(testItemId)
 		if err != nil {
 			t.Error("Error is not expected in this case")
 		}
@@ -111,5 +91,4 @@ func TestDone(t *testing.T) {
 			t.Error("Should set Done flag")
 		}
 	})
-	tearDown()
 }
