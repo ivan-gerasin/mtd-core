@@ -36,8 +36,8 @@ func (err *FileStorageError) Error() string {
 	return fmt.Sprintf("FileStorageError: %s", err.Details)
 }
 
-func readTodoList(mode int) (error, File, *mtdmodels.ToDoGlobal, func() error) {
-	file, err := standardFileSystem.OpenFile("todolist.json", mode, 0644)
+func readTodoList(filename string, mode int) (error, File, *mtdmodels.ToDoGlobal, func() error) {
+	file, err := standardFileSystem.OpenFile(filename, mode, 0644)
 	if err != nil {
 		return &FileStorageError{"readTodoList(): Error while trying to open file", err},
 			nil,
@@ -115,10 +115,15 @@ func saveToDoList(file File, todoList *mtdmodels.ToDoGlobal) error {
 	return nil
 }
 
-type FileStorage struct{}
+type FileStorage struct {
+	fileName string
+}
 
 func (fs FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
-	err, _, list, closeFile := readTodoList(mtdmodels.MODE_READ)
+	if fs.fileName == "" {
+		return &mtdmodels.MtdError{Where: "ReadTodoList()", Why: "File name is not set", OriginalError: nil}, nil
+	}
+	err, _, list, closeFile := readTodoList(fs.fileName, mtdmodels.MODE_READ)
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "ReadTodoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}, nil
 	}
@@ -130,7 +135,7 @@ func (fs FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
 }
 
 func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
-	err, file, _, closeFile := readTodoList(mtdmodels.MODE_EDIT)
+	err, file, _, closeFile := readTodoList(fs.fileName, mtdmodels.MODE_EDIT)
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
@@ -143,4 +148,8 @@ func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	return nil
+}
+
+func (fs FileStorage) UseFile(filename string) {
+	fs.fileName = filename
 }
