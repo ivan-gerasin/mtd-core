@@ -68,7 +68,7 @@ func (manager *LocalFilesManager) UseStorage(storage mtdmodels.TodoListStorage) 
 	manager.storage = &storage
 }
 
-func (manager *LocalFilesManager) UseListName(listName string) {
+func (manager *LocalFilesManager) UseList(listName string) {
 	if listName != "" {
 		(*manager.storage).UseSource(listName)
 	} else {

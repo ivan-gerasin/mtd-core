@@ -136,7 +136,7 @@ func (manager RemoteRestServerManager) Done(id int) error {
 	return nil
 }
 
-func (manager RemoteRestServerManager) UseListName(listName string) {
+func (manager RemoteRestServerManager) UseList(listName string) {
 	if listName != "" {
 		manager.listName = listName
 	} else {
