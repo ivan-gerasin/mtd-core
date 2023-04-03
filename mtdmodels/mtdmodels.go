@@ -27,12 +27,14 @@ const MODE_READ = os.O_CREATE | os.O_RDONLY
 type TodoListStorage interface {
 	ReadTodoList() (error, *ToDoGlobal)
 	SaveToDoList(lst *ToDoGlobal) error
+	UseSource(sourceStr string)
 }
 
 type TodoListManager interface {
 	AddItem(item string, priority Priority) error
 	List() (error, *ToDoGlobal)
 	Done(id int) error
+	UseList(listName string)
 }
 
 type MtdError struct {

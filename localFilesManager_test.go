@@ -26,6 +26,9 @@ func (fs MockedStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	return nil
 }
 
+func (fs MockedStorage) UseSource(filename string) {
+}
+
 var storageMock mtdmodels.TodoListStorage = MockedStorage{}
 var saveToDoListCalls *mtdmodels.ToDoGlobal
 var manager = LocalFilesManager{&storageMock}

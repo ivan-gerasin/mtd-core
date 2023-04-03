@@ -11,7 +11,8 @@ import (
 )
 
 type RemoteRestServerManager struct {
-	address string
+	address  string
+	listName string
 }
 
 func (manager *RemoteRestServerManager) UseAddress(addr string) {
@@ -103,4 +104,12 @@ func (manager RemoteRestServerManager) Done(id int) error {
 	err = json.Unmarshal(buffer, &dat)
 	fmt.Println("Status: " + dat["status"])
 	return nil
+}
+
+func (manager RemoteRestServerManager) UseListName(listName string) {
+	if listName != "" {
+		manager.listName = listName
+	} else {
+		manager.listName = "default"
+	}
 }

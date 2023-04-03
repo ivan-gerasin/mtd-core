@@ -150,6 +150,6 @@ func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	return nil
 }
 
-func (fs FileStorage) UseFile(filename string) {
-	fs.fileName = filename
+func (fs FileStorage) UseSource(filename string) {
+	fs.fileName = filename + ".json"
 }
