@@ -19,8 +19,35 @@ func (manager *RemoteRestServerManager) UseAddress(addr string) {
 	manager.address = addr
 }
 
+func (manager *RemoteRestServerManager) autoInit() {
+	if manager.address == "" {
+		panic("No remote address for RemoteRestServerManager")
+	}
+	if manager.listName == "" {
+		manager.listName = "default"
+	}
+}
+
+type ActionType = string
+
+const ACTION_ADD ActionType = "/add"
+const ACTION_LIST ActionType = "/list"
+const ACTION_DONE ActionType = "/done"
+
+const NO_ID = -1
+
+func (manager *RemoteRestServerManager) buildUri(action ActionType, itemId int) string {
+	var url = manager.address + "/" + manager.listName + action
+	if action == ACTION_DONE {
+		url += "/" + strconv.Itoa(itemId)
+	}
+	return url
+}
+
 func (manager *RemoteRestServerManager) List() (error, *mtdmodels.ToDoGlobal) {
-	resp, err := http.Get(manager.address + "/list")
+	manager.autoInit()
+
+	resp, err := http.Get(manager.buildUri(ACTION_LIST, NO_ID))
 	if err != nil {
 		return &mtdmodels.MtdError{
 			Why:           "Failed on sending request to remote REST mtd-server",
@@ -54,8 +81,10 @@ func (manager *RemoteRestServerManager) List() (error, *mtdmodels.ToDoGlobal) {
 }
 
 func (manager RemoteRestServerManager) AddItem(item string, priority mtdmodels.Priority) error {
+	manager.autoInit()
+
 	var stringValue = "{\"item\": \"" + item + "\"}"
-	resp, err := http.Post(manager.address+"/add", "application/json", strings.NewReader(stringValue))
+	resp, err := http.Post(manager.buildUri(ACTION_ADD, NO_ID), "application/json", strings.NewReader(stringValue))
 	if err != nil {
 		return &mtdmodels.MtdError{
 			Why:           "Failed while trying to make a request to server",
@@ -79,7 +108,8 @@ func (manager RemoteRestServerManager) AddItem(item string, priority mtdmodels.P
 }
 
 func (manager RemoteRestServerManager) Done(id int) error {
-	resp, err := http.Post(manager.address+"/done/"+strconv.Itoa(id), "application/json", nil)
+	manager.autoInit()
+	resp, err := http.Post(manager.buildUri(ACTION_DONE, id), "application/json", nil)
 	if err != nil {
 		return &mtdmodels.MtdError{
 			Why:           "Failed while trying to make a request to server",
