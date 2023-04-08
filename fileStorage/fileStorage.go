@@ -135,17 +135,13 @@ func (fs *FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
 }
 
 func (fs *FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
-	err, file, _, closeFile := readTodoList(fs.fileName, mtdmodels.MODE_EDIT)
+	err, file, _, _ := readTodoList(fs.fileName, mtdmodels.MODE_EDIT)
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	err = saveToDoList(file, lst)
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to save todo list file with FileStorage", Why: err.Error(), OriginalError: &err}
-	}
-	err = closeFile()
-	if err != nil {
-		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to close file with FileStorage", Why: err.Error(), OriginalError: &err}
 	}
 	return nil
 }
