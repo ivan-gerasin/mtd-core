@@ -119,7 +119,7 @@ type FileStorage struct {
 	fileName string
 }
 
-func (fs FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
+func (fs *FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
 	if fs.fileName == "" {
 		return &mtdmodels.MtdError{Where: "ReadTodoList()", Why: "File name is not set", OriginalError: nil}, nil
 	}
@@ -134,7 +134,7 @@ func (fs FileStorage) ReadTodoList() (error, *mtdmodels.ToDoGlobal) {
 	return nil, list
 }
 
-func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
+func (fs *FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	err, file, _, closeFile := readTodoList(fs.fileName, mtdmodels.MODE_EDIT)
 	if err != nil {
 		return &mtdmodels.MtdError{Where: "SaveToDoList(): failed to read todo list with FileStorage", Why: err.Error(), OriginalError: &err}
@@ -150,6 +150,6 @@ func (fs FileStorage) SaveToDoList(lst *mtdmodels.ToDoGlobal) error {
 	return nil
 }
 
-func (fs FileStorage) UseSource(filename string) {
+func (fs *FileStorage) UseSource(filename string) {
 	fs.fileName = filename + ".json"
 }
